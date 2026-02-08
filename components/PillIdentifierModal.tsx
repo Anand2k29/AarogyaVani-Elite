@@ -60,6 +60,19 @@ const PillIdentifierModal: React.FC<Props> = ({ medicineName, language, onClose 
 
         {/* Content */}
         <div className="p-6 overflow-y-auto">
+          
+          {/* Prominent Disclaimer */}
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 items-start">
+            <WarningIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-amber-900 leading-relaxed">
+              <p className="font-bold mb-1">Medical Disclaimer</p>
+              <p>
+                AI identification is experimental and <strong>not a substitute for professional medical advice</strong>. 
+                Visual matching can be inaccurate. Always verify the physical medicine with a qualified pharmacist or doctor before consumption.
+              </p>
+            </div>
+          </div>
+
           <p className="text-slate-600 mb-4">
             Is this pill <strong>{medicineName}</strong>? Take a photo to check.
           </p>
@@ -148,10 +161,6 @@ const PillIdentifierModal: React.FC<Props> = ({ medicineName, language, onClose 
                   <span className="text-sm font-medium text-teal-800">Listen to analysis</span>
                   <AudioPlayer text={result.voiceSummary} langCode={language} label="Result" />
                </div>
-
-              <div className="text-xs text-slate-400 mt-2 text-center">
-                * AI identification is an estimate. Always check the packaging or consult a pharmacist.
-              </div>
             </div>
           )}
         </div>
