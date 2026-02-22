@@ -34,12 +34,12 @@ const responseSchema: Schema = {
           items: {
             type: Type.OBJECT,
             properties: {
-              severity: { 
-                type: Type.STRING, 
+              severity: {
+                type: Type.STRING,
                 enum: ['HIGH', 'MODERATE', 'LOW'],
                 description: "Severity of the interaction"
               },
-              description: { 
+              description: {
                 type: Type.STRING,
                 description: "Simple explanation of the interaction risk"
               },
@@ -106,11 +106,11 @@ export const analyzePrescription = async (
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // Use the correct model name for multimodal tasks to avoid 404 errors
-  const modelName = "gemini-3-flash-preview"; 
+  // gemini-2.0-flash-lite: free-tier optimized (30 RPM, 1500/day), full multimodal support
+  const modelName = "gemini-2.0-flash-lite";
 
-  const previousContext = previousMedicines.length > 0 
-    ? `\n\nCRITICAL SAFETY CHECK: The patient is already taking these medicines: [${previousMedicines.join(', ')}]. \nCheck for any interactions between the NEW medicines in the image and these PREVIOUS medicines.` 
+  const previousContext = previousMedicines.length > 0
+    ? `\n\nCRITICAL SAFETY CHECK: The patient is already taking these medicines: [${previousMedicines.join(', ')}]. \nCheck for any interactions between the NEW medicines in the image and these PREVIOUS medicines.`
     : '';
 
   const prompt = `Analyze this prescription. The target language for the voice script is: ${targetLanguage}.${previousContext}`;
@@ -118,24 +118,27 @@ export const analyzePrescription = async (
   try {
     const response = await ai.models.generateContent({
       model: modelName,
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: "image/jpeg", // Assuming JPEG for simplicity, can be dynamic
-              data: base64Image,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Image,
+              },
             },
-          },
-          {
-            text: prompt,
-          },
-        ],
-      },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.4, // Keep it relatively deterministic for medical data
+        temperature: 0.4,
       },
     });
 
@@ -154,13 +157,8 @@ export const analyzePrescription = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    
-    // Check for common 404/Not Found errors indicating incorrect model name or region issues
-    if (error.message && (error.message.includes("404") || error.message.includes("not found"))) {
-      throw new Error("AI Model unavailable. This may be due to regional restrictions or temporary service outages.");
-    }
-    
-    throw error;
+    // Surface the actual API error message for easier debugging
+    throw new Error(error?.message || "Failed to analyze prescription.");
   }
 };
 
@@ -174,7 +172,7 @@ export const identifyPill = async (
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const modelName = "gemini-3-flash-preview";
+  const modelName = "gemini-2.0-flash-lite";
 
   const prompt = `
     The patient claims this pill is "${expectedMedicineName}". 
