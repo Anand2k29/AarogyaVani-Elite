@@ -106,8 +106,8 @@ export const analyzePrescription = async (
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // gemini-2.0-flash-lite: free-tier optimized (30 RPM, 1500/day), full multimodal support
-  const modelName = "gemini-2.0-flash-lite";
+  // gemini-1.5-flash: generous free-tier (15 RPM, 1M tokens/day), full multimodal support
+  const modelName = "gemini-1.5-flash";
 
   const previousContext = previousMedicines.length > 0
     ? `\n\nCRITICAL SAFETY CHECK: The patient is already taking these medicines: [${previousMedicines.join(', ')}]. \nCheck for any interactions between the NEW medicines in the image and these PREVIOUS medicines.`
@@ -157,8 +157,11 @@ export const analyzePrescription = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    // Surface the actual API error message for easier debugging
-    throw new Error(error?.message || "Failed to analyze prescription.");
+    const msg: string = error?.message || "";
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+      throw new Error("API quota limit reached. The free-tier daily limit has been exceeded. Please try again tomorrow or upgrade your Gemini API plan at ai.google.dev.");
+    }
+    throw new Error(msg || "Failed to analyze prescription.");
   }
 };
 
@@ -172,7 +175,7 @@ export const identifyPill = async (
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const modelName = "gemini-2.0-flash-lite";
+  const modelName = "gemini-1.5-flash";
 
   const prompt = `
     The patient claims this pill is "${expectedMedicineName}". 
@@ -213,6 +216,10 @@ export const identifyPill = async (
 
   } catch (error: any) {
     console.error("Pill Identification Error:", error);
+    const msg: string = error?.message || "";
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+      throw new Error("API quota limit reached. Please try again tomorrow or upgrade your Gemini API plan at ai.google.dev.");
+    }
     throw new Error("Failed to identify pill.");
   }
 };
