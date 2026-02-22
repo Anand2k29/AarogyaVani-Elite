@@ -31,7 +31,7 @@ const App: React.FC = () => {
         setAppState('SUCCESS');
       } catch (err: any) {
         const msg: string = err?.message || 'Detection failed.';
-        if (msg.includes('Model file not found')) {
+        if (msg === 'MODEL_NOT_FOUND') {
           setAppState('NO_MODEL');
         } else {
           setAppState('ERROR');
@@ -162,8 +162,8 @@ const App: React.FC = () => {
                       <span className="font-medium text-slate-800">{d.className}</span>
                     </div>
                     <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${d.confidence >= 0.75 ? 'bg-green-100 text-green-700' :
-                        d.confidence >= 0.55 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
+                      d.confidence >= 0.55 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
                       }`}>
                       {(d.confidence * 100).toFixed(0)}% conf
                     </span>

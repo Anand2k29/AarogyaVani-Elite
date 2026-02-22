@@ -33,12 +33,32 @@ const IOU_THRESHOLD = 0.45;
 
 let session: ort.InferenceSession | null = null;
 
+/** Check if model file actually exists (not just Vite's SPA HTML fallback) */
+async function modelFileExists(): Promise<boolean> {
+    try {
+        const res = await fetch(MODEL_URL, { cache: 'no-store' });
+        const contentType = res.headers.get('content-type') ?? '';
+        // Vite SPA fallback returns text/html for missing files with status 200
+        return res.ok && !contentType.includes('text/html');
+    } catch {
+        return false;
+    }
+}
+
 /** Load and cache the ONNX session */
 async function getSession(): Promise<ort.InferenceSession> {
     if (!session) {
-        session = await ort.InferenceSession.create(MODEL_URL, {
-            executionProviders: ['wasm'],
-        });
+        if (!(await modelFileExists())) {
+            throw new Error('MODEL_NOT_FOUND');
+        }
+        try {
+            session = await ort.InferenceSession.create(MODEL_URL, {
+                executionProviders: ['wasm'],
+            });
+        } catch {
+            session = null;
+            throw new Error('MODEL_NOT_FOUND');
+        }
     }
     return session;
 }
@@ -104,19 +124,16 @@ function nms(boxes: number[][], scores: number[], iouThresh: number): number[] {
 export async function detectPills(base64Image: string): Promise<DetectionResult> {
     const t0 = performance.now();
 
-    // 1. Check model file exists
-    const head = await fetch(MODEL_URL, { method: 'HEAD' }).catch(() => null);
-    if (!head || !head.ok) {
-        throw new Error(
-            'Model file not found at /models/pill_detection.onnx.\n' +
-            'Please run the training pipeline first:\n' +
-            '  cd model && pip install -r requirements.txt\n' +
-            '  python train.py\n' +
-            '  python export_onnx.py'
-        );
+    // getSession() handles model-not-found check internally
+    let sess: ort.InferenceSession;
+    try {
+        sess = await getSession();
+    } catch (e: any) {
+        if (e?.message === 'MODEL_NOT_FOUND') {
+            throw new Error('MODEL_NOT_FOUND');
+        }
+        throw e;
     }
-
-    const sess = await getSession();
     const { tensor, origW, origH } = await imageToTensor(base64Image);
 
     // 2. Run inference
