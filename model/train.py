@@ -10,19 +10,24 @@ Usage:
   python train.py
 """
 
-from roboflow import Roboflow
 from ultralytics import YOLO
 import os
 
-# ── 1. Download dataset from Roboflow ─────────────────────────────────────────
-rf = Roboflow(api_key="zgj03i2Iflfbu1msTp0Q")
-project = rf.workspace("anands-workspace").project("medicaments-counting-bpg0r-dyyub")
-version = project.version(1)
-dataset = version.download("yolov8")          # YOLOv8 format (not COCO) for direct training
+# ── 1. Dataset path ────────────────────────────────────────────────────────────
+LOCAL_YAML = os.path.join(os.path.dirname(__file__), "medicaments-counting-1", "data.yaml")
 
-dataset_yaml = os.path.join(dataset.location, "data.yaml")
-print(f"\n✅ Dataset downloaded to: {dataset.location}")
-print(f"   YAML config: {dataset_yaml}\n")
+if os.path.exists(LOCAL_YAML):
+    dataset_yaml = LOCAL_YAML
+    print(f"✅ Using cached dataset: {dataset_yaml}")
+else:
+    # Download only if not already present
+    from roboflow import Roboflow
+    rf = Roboflow(api_key="zgj03i2Iflfbu1msTp0Q")
+    project = rf.workspace("anands-workspace").project("medicaments-counting-bpg0r-dyyub")
+    version = project.version(1)
+    dataset = version.download("yolov8")
+    dataset_yaml = os.path.join(dataset.location, "data.yaml")
+    print(f"✅ Dataset downloaded to: {dataset_yaml}")
 
 # ── 2. Load pre-trained YOLOv8 nano segmentation model ────────────────────────
 model = YOLO("yolov8n-seg.pt")        # nano = smallest & fastest; good for browser
@@ -30,13 +35,13 @@ model = YOLO("yolov8n-seg.pt")        # nano = smallest & fastest; good for brow
 # ── 3. Train ──────────────────────────────────────────────────────────────────
 results = model.train(
     data=dataset_yaml,
-    epochs=50,           # increase to 100+ for better accuracy
-    imgsz=640,
-    batch=8,
+    epochs=10,           # quick run; increase to 50+ for better accuracy with GPU
+    imgsz=320,           # smaller image = much faster on CPU
+    batch=4,
     name="pill_seg",
-    patience=10,         # early stopping – stops if no improvement for 10 epochs
-    device=0,            # use GPU (cuda:0); set to "cpu" if no GPU available
-    amp=True,            # automatic mixed precision – speeds up training
+    patience=5,
+    device="0" if __import__("torch").cuda.is_available() else "cpu",
+    amp=False,           # disable AMP on CPU
 )
 
 print("\n✅ Training complete!")
