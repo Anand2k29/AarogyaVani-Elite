@@ -1,27 +1,14 @@
-# AarogyaVani — AI Prescription Voice Companion
+# AarogyaVani — On-Device Medicine Identifier
 
-AarogyaVani is a privacy-first, accessibility-focused web application designed to bridge the literacy and language gap for patients. It deciphers handwritten medical prescriptions and explains dosage instructions in the user's native language using AI-powered voice output.
+AarogyaVani is a 100% offline, privacy-first web application that identifies medicines from images using local AI models. It runs entirely in your browser via ONNX Runtime — no data ever leaves your device and no API keys are required.
 
-## The Concept
+## Features
 
-Rural patients, the elderly, and non-English speakers often struggle with:
-1. **Deciphering Difficulty**: Understanding doctor's cursive handwriting.
-2. **Language Barrier**: Medical abbreviations like "1 Tab BD" or "BBF" are unintelligible.
-3. **Literacy Gap**: Text-based results are inaccessible to the visually impaired or illiterate.
-
-AarogyaVani solves this by:
-- **Scanning**: Capturing an image of the prescription.
-- **Decoding**: Using Gemini 1.5 Flash to extract handwriting and interpret medical shorthand (e.g., "BD" → "Twice a day").
-- **Localizing**: Translating instructions into dialects (Hindi, Kannada, etc.).
-- **Voice Output**: Speaking instructions naturally for immediate understanding.
-
-## Core Features
-
-- **Prescription OCR & Interpretation** — Decipher messy handwriting and abbreviations.
-- **Native Voice Reminders** — Auditory explanations in 8+ Indian languages.
-- **Drug Interaction Safety** — Checks for potential risks between multiple prescribed medicines.
-- **Care Companion Module** — Includes Medication Reminders, Appointment Scheduling, and a one-tap SOS Emergency button.
-- **Privacy-First** — All health logs and care data are stored locally on-device.
+- **Local AI Inference** — YOLOv8 models served as ONNX, running in-browser with `onnxruntime-web`.
+- **Private Identification** — Upload photos of medicine strips or pills to get instant identification and usage advice.
+- **Zero Internet Required** — Fully functional offline healthy companion after the first page load.
+- **Elderly Care Companion** — Integrated SOS emergency button, medication reminders, and caregiver dashboard.
+- **Accessibility-First** — Built with large buttons, high contrast, and simplified interactions for ease of use.
 
 ## Tech Stack
 
@@ -29,36 +16,34 @@ AarogyaVani solves this by:
 |---|---|
 | Frontend | React 19, TypeScript, Tailwind CSS v4 |
 | Bundler | Vite 6 |
-| AI (Cloud) | Google Gemini 1.5 Flash (OCR + LLM) |
-| Voice | Web Speech API (Native TTS) |
-| Persistence | LocalStorage (On-device) |
+| AI Inference | `onnxruntime-web` (WebAssembly) |
+| Model | Custom YOLOv8 ONNX (Served locally) |
+| Storage | LocalStorage (On-device persistence) |
 
 ## Quick Start
 
-1. **Prerequisites**: Ensure you have a Google Gemini API Key.
-2. **Installation**:
+1. **Install Dependencies**:
 ```bash
 npm install
 ```
-3. **Environment**: Add your `API_KEY` to a `.env` file.
-4. **Run**:
+
+2. **Run Locally**:
 ```bash
 npm run dev
 ```
 
-Then open `http://localhost:3000`.
-
-## Elderly Care Companion
-
-AarogyaVani includes a **Care Companion** module:
-- 💊 **Medication Reminders**: Health log + voice alerts.
-- 📅 **Appointment Calendar**: Manage visit schedules.
-- 🆘 **SOS Button**: Quick-dial emergency contacts with haptic feedback.
-- 👨‍👩‍👧 **Caregiver Dashboard**: adherence summary for family members.
+3. **Train the Model** (Optional):
+The app requires an ONNX model at `public/models/pill_detection.onnx`. If you want to train it on your own dataset:
+```bash
+cd model
+pip install -r requirements.txt
+python train.py
+python export_onnx.py
+```
 
 ## Disclaimer
 
-**AarogyaVani is an AI-powered translation tool and is NOT a medical device.** AI can make mistakes. Always verify instructions with a licensed pharmacist or doctor before taking medication.
+**AarogyaVani is NOT a medical device.** AI identification can be inaccurate. Never take medication based solely on an automated scan. Always verify with a licensed healthcare professional.
 
 ---
 **Repository:** [github.com/Anand2k29/AarogyaVani-Elite](https://github.com/Anand2k29/AarogyaVani-Elite)
