@@ -154,7 +154,8 @@ export async function detectPills(base64Image: string): Promise<DetectionResult>
         let maxClass = 0;
 
         for (let c = 4; c < rows; c++) {
-            const conf = data[c * anchors + a];
+            const rawConf = data[c * anchors + a];
+            const conf = 1 / (1 + Math.exp(-rawConf)); // Sigmoid activation
             if (conf > maxConf) { maxConf = conf; maxClass = c - 4; }
         }
 

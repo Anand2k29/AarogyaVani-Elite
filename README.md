@@ -7,7 +7,8 @@ AarogyaVani is a 100% offline, privacy-first web application that identifies med
 - **Local AI Inference** — YOLOv8 models served as ONNX, running in-browser with `onnxruntime-web`.
 - **Private Identification** — Upload photos of medicine strips or pills to get instant identification and usage advice.
 - **Zero Internet Required** — Fully functional offline healthy companion after the first page load.
-- **Elderly Care Companion** — Integrated SOS emergency button, medication reminders, and caregiver dashboard.
+- **Premium Dark-First UI** — High-contrast, accessibility-optimized design that defaults to a sleek dark mode.
+- **Elderly Care Companion Suite** — Integrated SOS Panel, Medication Reminders, Appointment Calendar, and Caregiver Dashboard.
 - **Accessibility-First** — Built with large buttons, high contrast, and simplified interactions for ease of use.
 
 ## Tech Stack
