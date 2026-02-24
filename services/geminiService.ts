@@ -1,51 +1,49 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType, ResponseSchema } from "@google/generative-ai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { AarogyaResponse, PillAnalysisResult } from "../types";
 
-const apiKey = process.env.API_KEY;
+const apiKey = (import.meta as any).env.VITE_API_KEY || ""; // Use import.meta.env for Vite
 
-// Define the response schema using the Type enum
-const responseSchema: Schema = {
-  type: Type.OBJECT,
+// Define the response schema
+const responseSchema: ResponseSchema = {
+  type: SchemaType.OBJECT,
   properties: {
     structured_data: {
-      type: Type.OBJECT,
+      type: SchemaType.OBJECT,
       properties: {
         medicines: {
-          type: Type.ARRAY,
+          type: SchemaType.ARRAY,
           items: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
-              name: { type: Type.STRING, description: "Name of the medicine" },
-              dosage: { type: Type.STRING, description: "Dosage quantity (e.g., 1 tablet)" },
-              timing: { type: Type.STRING, description: "When to take it (e.g., Before Breakfast)" },
-              notes: { type: Type.STRING, description: "Any special instructions or safety warnings" },
+              name: { type: SchemaType.STRING, description: "Name of the medicine" },
+              dosage: { type: SchemaType.STRING, description: "Dosage quantity (e.g., 1 tablet)" },
+              timing: { type: SchemaType.STRING, description: "When to take it (e.g., Before Breakfast)" },
+              notes: { type: SchemaType.STRING, description: "Any special instructions or safety warnings" },
             },
             required: ["name", "dosage", "timing"],
           },
         },
         patientNotes: {
-          type: Type.STRING,
+          type: SchemaType.STRING,
           description: "General advice or warnings about illegible text",
         },
         interactions: {
-          type: Type.ARRAY,
-          description: "List of potential drug interactions found.",
+          type: SchemaType.ARRAY,
           items: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
               severity: {
-                type: Type.STRING,
-                enum: ['HIGH', 'MODERATE', 'LOW'],
-                description: "Severity of the interaction"
+                type: SchemaType.STRING,
+                description: "Severity of the interaction (HIGH, MODERATE, LOW)"
               },
               description: {
-                type: Type.STRING,
+                type: SchemaType.STRING,
                 description: "Simple explanation of the interaction risk"
               },
               medicines: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
+                type: SchemaType.ARRAY,
+                items: { type: SchemaType.STRING },
                 description: "List of medicine names involved in this interaction"
               }
             },
@@ -56,40 +54,39 @@ const responseSchema: Schema = {
       required: ["medicines"],
     },
     voice_script_english: {
-      type: Type.STRING,
+      type: SchemaType.STRING,
       description: "A simple English script summarizing the instructions and any critical warnings.",
     },
     voice_script_native: {
-      type: Type.STRING,
+      type: SchemaType.STRING,
       description: "The translated script in the target language, ready for Text-to-Speech.",
     },
     success_message: {
-      type: Type.STRING,
-      description: "A short, friendly, and reassuring confirmation in the target language that the prescription was successfully read. Example: 'I have read your prescription and found 3 medicines.'",
+      type: SchemaType.STRING,
+      description: "A short, friendly, and reassuring confirmation in the target language.",
     },
   },
   required: ["structured_data", "voice_script_english", "voice_script_native", "success_message"],
 };
 
-const pillAnalysisSchema: Schema = {
-  type: Type.OBJECT,
+const pillAnalysisSchema: ResponseSchema = {
+  type: SchemaType.OBJECT,
   properties: {
     visualDescription: {
-      type: Type.STRING,
-      description: "A description of the pill's physical appearance (shape, color, markings).",
+      type: SchemaType.STRING,
+      description: "Description of the pill appearance.",
     },
     matchStatus: {
-      type: Type.STRING,
-      enum: ['LIKELY_MATCH', 'POSSIBLE_MISMATCH', 'UNCERTAIN'],
-      description: "Assessment of whether the pill image matches the expected medicine name.",
+      type: SchemaType.STRING,
+      description: "Match quality (LIKELY_MATCH, POSSIBLE_MISMATCH, UNCERTAIN)",
     },
     analysis: {
-      type: Type.STRING,
-      description: "Detailed analysis explaining why it matches or doesn't match, including generic equivalents.",
+      type: SchemaType.STRING,
+      description: "Detailed analysis.",
     },
     voiceSummary: {
-      type: Type.STRING,
-      description: "A short, spoken summary of the findings in the requested language.",
+      type: SchemaType.STRING,
+      description: "Spoken summary of findings.",
     },
   },
   required: ["visualDescription", "matchStatus", "analysis", "voiceSummary"],
@@ -101,13 +98,14 @@ export const analyzePrescription = async (
   previousMedicines: string[] = []
 ): Promise<AarogyaResponse> => {
   if (!apiKey) {
-    throw new Error("API Key is missing. Please check your environment configuration.");
+    throw new Error("API Key is missing. Please check your .env file and ensure VITE_API_KEY is set.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-
-  // gemini-1.5-flash: generous free-tier (15 RPM, 1M tokens/day), full multimodal support
-  const modelName = "gemini-1.5-flash";
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: SYSTEM_INSTRUCTION,
+  });
 
   const previousContext = previousMedicines.length > 0
     ? `\n\nCRITICAL SAFETY CHECK: The patient is already taking these medicines: [${previousMedicines.join(', ')}]. \nCheck for any interactions between the NEW medicines in the image and these PREVIOUS medicines.`
@@ -116,8 +114,7 @@ export const analyzePrescription = async (
   const prompt = `Analyze this prescription. The target language for the voice script is: ${targetLanguage}.${previousContext}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelName,
+    const response = await model.generateContent({
       contents: [
         {
           role: 'user',
@@ -134,15 +131,15 @@ export const analyzePrescription = async (
           ],
         },
       ],
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
         temperature: 0.4,
-      },
+      }
     });
 
-    const text = response.text;
+    const result = response.response;
+    const text = result.text();
     if (!text) {
       throw new Error("No response generated from Gemini.");
     }
@@ -159,7 +156,7 @@ export const analyzePrescription = async (
     console.error("Gemini API Error:", error);
     const msg: string = error?.message || "";
     if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
-      throw new Error("API quota limit reached. The free-tier daily limit has been exceeded. Please try again tomorrow or upgrade your Gemini API plan at ai.google.dev.");
+      throw new Error("API quota limit reached. Please try again later.");
     }
     throw new Error(msg || "Failed to analyze prescription.");
   }
@@ -174,8 +171,10 @@ export const identifyPill = async (
     throw new Error("API Key is missing.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const modelName = "gemini-1.5-flash";
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+  });
 
   const prompt = `
     The patient claims this pill is "${expectedMedicineName}". 
@@ -189,28 +188,31 @@ export const identifyPill = async (
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: "image/jpeg",
-              data: base64Image,
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Image,
+              },
             },
-          },
-          {
-            text: prompt,
-          },
-        ],
-      },
-      config: {
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: pillAnalysisSchema,
-      },
+      }
     });
 
-    const text = response.text;
+    const result = response.response;
+    const text = result.text();
     if (!text) throw new Error("No response");
     return JSON.parse(text) as PillAnalysisResult;
 
@@ -218,7 +220,7 @@ export const identifyPill = async (
     console.error("Pill Identification Error:", error);
     const msg: string = error?.message || "";
     if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
-      throw new Error("API quota limit reached. Please try again tomorrow or upgrade your Gemini API plan at ai.google.dev.");
+      throw new Error("API quota limit reached.");
     }
     throw new Error("Failed to identify pill.");
   }

@@ -1,13 +1,27 @@
-# AarogyaVani — On-Device Pill Detector
+# AarogyaVani — AI Prescription Voice Companion
 
-AarogyaVani is a privacy-first web app that counts and identifies pills from a photo using a custom-trained YOLOv8 model running entirely in the browser via ONNX Runtime. No data ever leaves your device.
+AarogyaVani is a privacy-first, accessibility-focused web application designed to bridge the literacy and language gap for patients. It deciphers handwritten medical prescriptions and explains dosage instructions in the user's native language using AI-powered voice output.
 
-## Features
+## The Concept
 
-- **Local AI Inference** — YOLOv8 segmentation model served as ONNX, runs in-browser with `onnxruntime-web`.
-- **Instant Pill Count** — Upload or photograph your medicines; the model detects, counts, and labels every pill with confidence scores.
-- **Zero Internet Required** — Works fully offline after the first page load.
-- **No API Keys** — No cloud calls, no Gemini, no backend.
+Rural patients, the elderly, and non-English speakers often struggle with:
+1. **Deciphering Difficulty**: Understanding doctor's cursive handwriting.
+2. **Language Barrier**: Medical abbreviations like "1 Tab BD" or "BBF" are unintelligible.
+3. **Literacy Gap**: Text-based results are inaccessible to the visually impaired or illiterate.
+
+AarogyaVani solves this by:
+- **Scanning**: Capturing an image of the prescription.
+- **Decoding**: Using Gemini 1.5 Flash to extract handwriting and interpret medical shorthand (e.g., "BD" → "Twice a day").
+- **Localizing**: Translating instructions into dialects (Hindi, Kannada, etc.).
+- **Voice Output**: Speaking instructions naturally for immediate understanding.
+
+## Core Features
+
+- **Prescription OCR & Interpretation** — Decipher messy handwriting and abbreviations.
+- **Native Voice Reminders** — Auditory explanations in 8+ Indian languages.
+- **Drug Interaction Safety** — Checks for potential risks between multiple prescribed medicines.
+- **Care Companion Module** — Includes Medication Reminders, Appointment Scheduling, and a one-tap SOS Emergency button.
+- **Privacy-First** — All health logs and care data are stored locally on-device.
 
 ## Tech Stack
 
@@ -15,67 +29,36 @@ AarogyaVani is a privacy-first web app that counts and identifies pills from a p
 |---|---|
 | Frontend | React 19, TypeScript, Tailwind CSS v4 |
 | Bundler | Vite 6 |
-| AI Inference | `onnxruntime-web` (WASM) |
-| Model | Custom YOLOv8 segmentation → ONNX |
+| AI (Cloud) | Google Gemini 1.5 Flash (OCR + LLM) |
+| Voice | Web Speech API (Native TTS) |
+| Persistence | LocalStorage (On-device) |
 
 ## Quick Start
 
+1. **Prerequisites**: Ensure you have a Google Gemini API Key.
+2. **Installation**:
 ```bash
 npm install
+```
+3. **Environment**: Add your `API_KEY` to a `.env` file.
+4. **Run**:
+```bash
 npm run dev
 ```
 
-Then open `http://localhost:5173`.
+Then open `http://localhost:3000`.
 
-> **Note:** The app requires a trained ONNX model at `public/models/`. If it's missing, the UI will guide you through training.
+## Elderly Care Companion
 
-## Training the Model
-
-```bash
-cd model
-pip install -r requirements.txt
-python train.py          # trains YOLOv8 on your dataset
-python export_onnx.py    # exports model → public/models/
-```
-
-After export, refresh the app — it will automatically pick up the new model.
+AarogyaVani includes a **Care Companion** module:
+- 💊 **Medication Reminders**: Health log + voice alerts.
+- 📅 **Appointment Calendar**: Manage visit schedules.
+- 🆘 **SOS Button**: Quick-dial emergency contacts with haptic feedback.
+- 👨‍👩‍👧 **Caregiver Dashboard**: adherence summary for family members.
 
 ## Disclaimer
 
-**AarogyaVani is not a medical device.** AI detection can be inaccurate. Always confirm medications with a licensed pharmacist or doctor.
+**AarogyaVani is an AI-powered translation tool and is NOT a medical device.** AI can make mistakes. Always verify instructions with a licensed pharmacist or doctor before taking medication.
 
 ---
-
-## � Elderly Care Companion
-
-AarogyaVani goes beyond pill detection — it includes a **Care Companion** module designed specifically for elderly users who need help managing their daily health routines. Everything runs offline in the browser; no account, no cloud, no installation required.
-
-### Why It Matters
-India has 140 million+ elderly citizens, many of whom live alone or with limited family support. Medication non-adherence accounts for ~30% of hospital admissions in seniors. AarogyaVani's Care Companion bridges this gap — accessible on any smartphone browser, in any connectivity condition.
-
-### Care Companion Features
-
-| # | Feature | Description |
-|---|---|---|
-| 1 | 💊 **Medication Reminders** | Add medicines with name, dosage & daily schedule; browser notifications alert the user at the right time; one-tap Taken / Skipped health log |
-| 2 | 📅 **Appointment Scheduling** | Full calendar view of upcoming doctor visits; add/edit/delete appointments with doctor name, location & time |
-| 3 | 🆘 **SOS / Emergency Button** | Store up to 3 emergency contacts; a single large SOS button triggers a call link and an alert — works fully offline |
-| 4 | 👨‍👩‍👧 **Family / Caregiver Dashboard** | At-a-glance summary of today's medications, upcoming appointments and recent health logs — exportable to clipboard for sharing |
-
-### Accessibility-First Design
-- Large fonts & high-contrast UI built for low vision
-- Single-tap interactions — no complex multi-step flows
-- Text-to-speech audio cues for medication alerts
-- Optimised for budget Android phones on any browser
-
-### Architecture
-All Care Companion data is stored in `localStorage` on the device — the same privacy-first, no-backend approach as the pill detector. No account, no server, no data ever leaves the phone.
-
-### Technology Roadmap
-```
-Phase 1 ✅  Pill Detector        — on-device YOLOv8 ONNX inference
-Phase 2 ✅  Elderly Care Companion — medication, appointments, SOS, caregiver dashboard
-Phase 3 🔜  Voice reminders      — Web Speech API (speak medicine names aloud)
-Phase 4 🔜  Volunteer matching   — QR-code pairing with local caregivers
-Phase 5 🔜  Multilingual alerts  — 8+ Indian languages for medication reminders
-```
+**Repository:** [github.com/Anand2k29/AarogyaVani-Elite](https://github.com/Anand2k29/AarogyaVani-Elite)
