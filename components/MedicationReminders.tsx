@@ -22,7 +22,7 @@ const LANGUAGES = [
     { code: 'en-US', name: 'English' },
     { code: 'hi-IN', name: 'Hindi (हिंदी)' },
     { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
-    { code: TA_IN = 'ta-IN', name: 'Tamil (தமிழ்)' },
+    { code: 'ta-IN', name: 'Tamil (தமிழ்)' },
     { code: 'te-IN', name: 'Telugu (తెలుగు)' },
     { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
     { code: 'mr-IN', name: 'Marathi (ಮರಾಠಿ)' },
