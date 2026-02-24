@@ -105,7 +105,7 @@ export const analyzePrescription = async (
   const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
     systemInstruction: SYSTEM_INSTRUCTION,
-  });
+  }, { apiVersion: 'v1beta' });
 
   const previousContext = previousMedicines.length > 0
     ? `\n\nCRITICAL SAFETY CHECK: The patient is already taking these medicines: [${previousMedicines.join(', ')}]. \nCheck for any interactions between the NEW medicines in the image and these PREVIOUS medicines.`
@@ -174,7 +174,7 @@ export const identifyPill = async (
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
-  });
+  }, { apiVersion: 'v1beta' });
 
   const prompt = `
     The patient claims this pill is "${expectedMedicineName}". 
