@@ -41,8 +41,8 @@ export const SOSPanel: React.FC = () => {
             return;
         }
         setSosActive(true);
-        // Haptic feedback
-        if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+        // Haptic feedback (SOS Morse Pattern: ... --- ...)
+        if ('vibrate' in navigator) navigator.vibrate([100, 100, 100, 100, 100, 300, 300, 100, 300, 100, 300, 300, 100, 100, 100, 100, 100]);
         // Call first contact
         window.location.href = `tel:${contacts[0].phone}`;
         setTimeout(() => setSosActive(false), 3000);

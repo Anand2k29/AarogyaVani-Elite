@@ -18,6 +18,17 @@ function uid() {
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+const LANGUAGES = [
+    { code: 'en-US', name: 'English' },
+    { code: 'hi-IN', name: 'Hindi (हिंदी)' },
+    { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)' },
+    { code: TA_IN = 'ta-IN', name: 'Tamil (தமிழ்)' },
+    { code: 'te-IN', name: 'Telugu (తెలుగు)' },
+    { code: 'ml-IN', name: 'Malayalam (മലയാളം)' },
+    { code: 'mr-IN', name: 'Marathi (ಮರಾಠಿ)' },
+    { code: 'bn-IN', name: 'Bengali (বাংলা)' },
+] as any; // Simplified for this implementation
+
 const FREQ_PRESETS = [
     { label: 'Once a day', times: ['08:00'] },
     { label: 'Twice a day', times: ['08:00', '20:00'] },
@@ -30,7 +41,7 @@ export const MedicationReminders: React.FC = () => {
     const [logs, setLogs] = useState<MedLog[]>(() => load(LS_LOGS, []));
     const [showForm, setShowForm] = useState(false);
 
-    const [form, setForm] = useState({ name: '', dosage: '', preset: 0, customTime: '08:00', notes: '' });
+    const [form, setForm] = useState({ name: '', dosage: '', preset: 0, customTime: '08:00', notes: '', lang: 'en-US' });
 
     // Persist whenever state changes
     useEffect(() => { save(LS_MEDS, meds); }, [meds]);
@@ -43,10 +54,24 @@ export const MedicationReminders: React.FC = () => {
         }
     }, []);
 
+    // Speech functionality
+    const speakReminder = (medName: string, dosage: string, langCode: string) => {
+        if (!('speechSynthesis' in window)) return;
+        const utterance = new SpeechSynthesisUtterance();
+        utterance.lang = langCode;
+
+        // Dynamic message based on language
+        let text = `Time to take your medicine: ${medName}. Dosage: ${dosage}`;
+        if (langCode.startsWith('hi')) text = `आपकी दवा लेने का समय हो गया है: ${medName}. खुराक: ${dosage}`;
+        if (langCode.startsWith('kn')) text = `ನಿಮ್ಮ ಔಷಧಿಯನ್ನು ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯ: ${medName}. ಡೋಸೇಜ್: ${dosage}`;
+
+        utterance.text = text;
+        window.speechSynthesis.speak(utterance);
+    };
+
     // Check every minute for due reminders
     useEffect(() => {
         const fire = () => {
-            if (!('Notification' in window) || Notification.permission !== 'granted') return;
             const now = new Date();
             const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             const today = todayStr();
@@ -57,10 +82,18 @@ export const MedicationReminders: React.FC = () => {
                             l => l.medicationId === m.id && l.date === today && l.time === t
                         );
                         if (!alreadyLogged) {
-                            new Notification(`💊 Time to take ${m.name}`, {
-                                body: `Dosage: ${m.dosage}`,
-                                icon: '/favicon.ico',
-                            });
+                            // Text Notification
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                                new Notification(`💊 Time to take ${m.name}`, {
+                                    body: `Dosage: ${m.dosage}`,
+                                    icon: '/favicon.ico',
+                                });
+                            }
+                            // Voice Reminder (Phase 3)
+                            speakReminder(m.name, m.dosage, (m as any).lang || 'en-US');
+
+                            // Haptic Feedback
+                            if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
                         }
                     }
                 });
@@ -76,9 +109,16 @@ export const MedicationReminders: React.FC = () => {
             ? [form.customTime]
             : preset.times;
         if (!form.name.trim() || times.length === 0) return;
-        const med: Medication = { id: uid(), name: form.name.trim(), dosage: form.dosage.trim() || '1 tablet', times, notes: form.notes.trim() || undefined };
+        const med: Medication = {
+            id: uid(),
+            name: form.name.trim(),
+            dosage: form.dosage.trim() || '1 tablet',
+            times,
+            notes: form.notes.trim() || undefined,
+            lang: form.lang
+        } as any;
         setMeds(p => [...p, med]);
-        setForm({ name: '', dosage: '', preset: 0, customTime: '08:00', notes: '' });
+        setForm({ name: '', dosage: '', preset: 0, customTime: '08:00', notes: '', lang: 'en-US' });
         setShowForm(false);
     }, [form]);
 
@@ -162,6 +202,18 @@ export const MedicationReminders: React.FC = () => {
                                     value={form.customTime} onChange={e => setForm(f => ({ ...f, customTime: e.target.value }))} />
                             </div>
                         )}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Reminder Language</label>
+                        <select
+                            className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            value={form.lang}
+                            onChange={e => setForm(f => ({ ...f, lang: e.target.value }))}
+                        >
+                            {(LANGUAGES as any).map((l: any) => (
+                                <option key={l.code} value={l.code}>{l.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-600 mb-1">Notes (optional)</label>
