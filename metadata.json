@@ -1,8 +1,0 @@
-{
-  "name": "AarogyaVani",
-  "description": "An AI-powered voice companion and virtual pharmacist that interprets handwritten medical prescriptions and converts them into spoken instructions.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}
