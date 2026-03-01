@@ -57,8 +57,8 @@ export async function decodePrescription(
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Using gemini-2.5-flash as it's the current fast/capable multimodal model
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // Using gemini-1.5-flash as it's the current fast/capable multimodal model
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `${SYSTEM_PROMPT}\n\nThe user's requested output language is: ${language}.
         Please decipher the attached prescription image.`;
